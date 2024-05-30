@@ -1,0 +1,245 @@
+{pkgs, ...}: {
+  programs.vim = {
+    enable = true;
+    defaultEditor = true;
+
+    plugins = with pkgs.vimPlugins; [
+      ale
+      asyncomplete-vim
+      asyncomplete-lsp-vim
+      base16-vim
+      copilot-vim
+      lightline-vim
+      # lightline-ale
+      lightline-lsp
+      fugitive
+      fzf-vim
+      vim-commentary
+      vim-dadbod
+      vim-dispatch
+      vim-dotenv
+      vim-eunuch
+      vim-lsp
+      vim-lsp-ale
+      vim-lsp-settings
+      vim-mustache-handlebars
+      vim-rails
+      vim-signify
+      vim-wayland-clipboard
+      vim-vsnip
+      vim-vsnip-integ
+      zig-vim
+    ];
+
+    settings = {
+      hidden = true;
+      ignorecase = true;
+      # mouse = "a";
+      number = true;
+      relativenumber = true;
+      smartcase = true;
+    };
+
+    extraConfig = ''
+      set nocompatible
+      set encoding=utf-8
+      set wildmenu
+      set showcmd
+      set hlsearch
+      " Use visual bell instead of beeping when doing something wrong
+      set visualbell
+
+      " And reset the terminal code for the visual bell. If visualbell is set, and
+      " this line is also included, vim will neither flash nor beep. If visualbell
+      " is unset, this does nothing.
+      set t_vb=
+      set backspace=indent,eol,start
+      set autoindent
+      set nostartofline
+      set ruler
+      set confirm
+      " Quickly time out on keycodes, but never time out on mappings
+      set notimeout ttimeout ttimeoutlen=200
+      set pastetoggle=<F11>
+      " automatically leave paste mode so I don't forget
+      autocmd InsertLeave * set nopaste
+      " Indentation settings for using 4 spaces instead of tabs.
+      " Do not change 'tabstop' from its default value of 8 with this setup.
+      set shiftwidth=4
+      set softtabstop=4
+      set expandtab
+      " Don't update the screen when executing macros
+      set lazyredraw
+
+      " Easier to reach than \
+      let mapleader=" "
+
+      " fzf
+      nmap <leader>p :Files<cr>
+      nmap <leader>bb :Buffers<cr>
+
+      " dadbod
+      autocmd FileType sql let b:dispatch = 'pgcli %'
+      vnoremap <leader>d :DB<cr>
+      nmap <leader>d :DB<cr>
+
+      set formatoptions=ctqrn1
+
+      " Show matching brackets.
+      set showmatch
+
+      " Bracket blinking.
+      set matchtime=5
+
+      " start scrolling when we're 8 lines away from margins
+      set scrolloff=8
+      set sidescrolloff=15
+      set sidescroll=1
+
+      set noswapfile
+      set nobackup
+      set nowb
+
+      " Automatically insert the current comment leader after hitting 'o' or 'O' in Normal mode.
+      "set fo+=o
+      " Do not automatically insert a comment leader after an enter
+      "set fo-=r
+      " Do no auto-wrap text using textwidth (does not apply to comments)
+      "set fo-=t
+
+      set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*/vendor/*,*/bin/*,*/node_modules/*
+
+      " quicker async update time
+      set updatetime=100
+
+      " taller vertical bar for vsplits
+      set fillchars+=vert:│
+
+      set ttymouse = "sgr";
+
+      " Enable 24-bit colors
+      set termguicolors
+      let &t_8f = "\<Esc>[38:2::%lu:%lu:%lum"
+      let &t_8b = "\<Esc>[48:2::%lu:%lu:%lum"
+
+      " Workaround bug in vim, where it incorrectly thinks modifyOtherKeys level 2 is
+      " enabled, even when it's not. The snippets below ensure modifyOtherKeys=2 is
+      " enabled. https://github.com/vim/vim/issues/9014
+      let &t_TI = "\<Esc>[>4;2m"
+      let &t_TE = "\<Esc>[>4;m"
+
+      set undodir=~/.vim/backups
+      set undofile
+
+      " When opening a file, always jump to the last cursor position
+      autocmd BufReadPost *
+      \ if line("'\"") > 0 && line ("'\"") <= line("$") |
+      \ exe "normal g'\"" |
+      \ endif
+
+      " remove annoying help window
+      inoremap <F1> <nop>
+      nnoremap <F1> <nop>
+      vnoremap <F1> <nop>
+
+      " better window navigation
+      nnoremap <c-j> <c-w>j
+      nnoremap <c-k> <c-w>k
+      nnoremap <c-h> <c-w>h
+      nnoremap <c-l> <c-w>l
+
+      " quickfix
+      nnoremap <c-n> :cnext<CR>
+      nnoremap <c-b> :cprevious<CR>
+
+      " command line autocomplete
+      set wildchar=<Tab> wildmenu wildmode=full
+
+      " scroll through buffers
+      noremap <left> :bp<CR>
+      noremap <right> :bn<CR>
+
+      " show menu to switch buffers
+      set wildcharm=<C-Z>
+      nnoremap <F10> :b <C-Z>
+
+      " unhighlight search results
+      noremap <silent><Leader>/ :nohls<CR>
+
+      " reselect visual block after indent/outdent
+      vnoremap < <gv
+      vnoremap > >gv
+
+      " force saving files that require root permission
+      cmap w!! %!sudo tee > /dev/null %
+
+      " Close the current buffer and move to the previous one
+      " This replicates the idea of closing a tab
+      nmap <leader>bq :bp <BAR> bd #<CR>
+
+      colorscheme base16-default-dark
+
+      let g:termdebug_popup = 0
+      let g:termdebug_wide = 163
+
+      " vim-lsp
+      function! s:on_lsp_buffer_enabled() abort
+        setlocal omnifunc=lsp#complete
+        setlocal signcolumn=yes
+        if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
+        nmap <buffer> gd <plug>(lsp-definition)
+        nmap <buffer> gs <plug>(lsp-document-symbol-search)
+        nmap <buffer> gS <plug>(lsp-workspace-symbol-search)
+        nmap <buffer> gr <plug>(lsp-references)
+        nmap <buffer> gi <plug>(lsp-implementation)
+        nmap <buffer> <leader>gt <plug>(lsp-type-definition)
+        nmap <buffer> <leader>rn <plug>(lsp-rename)
+        nmap <buffer> [g <plug>(lsp-previous-diagnostic)
+        nmap <buffer> ]g <plug>(lsp-next-diagnostic)
+        nmap <buffer> K <plug>(lsp-hover)
+        " nnoremap <buffer> <expr><c-f> lsp#scroll(+4)
+        " nnoremap <buffer> <expr><c-d> lsp#scroll(-4)
+
+        let g:lsp_format_sync_timeout = 1000
+        autocmd! BufWritePre *.rs,*.go call execute('LspDocumentFormatSync')
+
+        " refer to doc to add more commands
+      endfunction
+
+      augroup lsp_install
+          au!
+          " call s:on_lsp_buffer_enabled only for languages that has the server registered.
+          autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+      augroup END
+
+      "if executable('solargraph')
+      "    " gem install solargraph
+      "    au User lsp_setup call lsp#register_server({
+      "        \ 'name': 'solargraph',
+      "        \ 'cmd': {server_info->[&shell, &shellcmdflag, 'solargraph stdio']},
+      "        \ 'initialization_options': {"diagnostics": "true"},
+      "        \ 'whitelist': ['ruby'],
+      "        \ })
+      "endif
+
+      " asyncomplete
+      inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+      inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+      inoremap <expr> <cr>    pumvisible() ? asyncomplete#close_popup() : "\<cr>"
+
+      imap <c-@> <Plug>(asyncomplete_force_refresh)
+
+      " vim-vsnip
+      " Expand
+      imap <expr> <C-j>   vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-j>'
+      smap <expr> <C-j>   vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-j>'
+
+      " Expand or jump
+      imap <expr> <C-l>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-l>'
+      smap <expr> <C-l>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-l>'
+
+      " Copilot ugh
+      " let g:copilot_node_command = "/usr/bin/env node"
+    '';
+  };
+}
